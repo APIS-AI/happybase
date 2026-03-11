@@ -1,8 +1,12 @@
 *.py[co]
 *.egg-info/
 .coverage
+.pytest_cache/
+.ruff_cache/
+.swarm/
 .tox/
 build/
 coverage/
 dist/
 doc/build/
+htmlcov/

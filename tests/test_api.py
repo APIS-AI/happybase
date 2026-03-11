@@ -7,6 +7,7 @@ import os
 import random
 import threading
 
+import pytest
 import six
 from six.moves import range
 
@@ -17,6 +18,14 @@ HAPPYBASE_PORT = os.environ.get('HAPPYBASE_PORT')
 HAPPYBASE_COMPAT = os.environ.get('HAPPYBASE_COMPAT', '0.98')
 HAPPYBASE_TRANSPORT = os.environ.get('HAPPYBASE_TRANSPORT', 'buffered')
 KEEP_TABLE = ('HAPPYBASE_NO_CLEANUP' in os.environ)
+
+pytestmark = pytest.mark.integration
+
+if HAPPYBASE_HOST is None:
+    pytest.skip(
+        "integration tests require HAPPYBASE_HOST to target a live HBase service",
+        allow_module_level=True,
+    )
 
 TABLE_PREFIX = b'happybase_tests_tmp'
 TEST_TABLE_NAME = b'test1'
