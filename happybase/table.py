@@ -6,8 +6,6 @@ import logging
 from numbers import Integral
 from struct import Struct
 
-from six import iteritems
-
 from Hbase_thrift import TScan
 
 from .util import thrift_type_to_dict, bytes_increment, OrderedDict
@@ -22,7 +20,7 @@ def make_row(cell_map, include_timestamp):
     """Make a row dict for a cell mapping like ttypes.TRowResult.columns."""
     return {
         name: (cell.value, cell.timestamp) if include_timestamp else cell.value
-        for name, cell in iteritems(cell_map)
+        for name, cell in cell_map.items()
     }
 
 
@@ -38,7 +36,7 @@ def make_ordered_row(sorted_columns, include_timestamp):
     return od
 
 
-class Table(object):
+class Table:
     """HBase table abstraction class.
 
     This class cannot be instantiated directly; use :py:meth:`Connection.table`

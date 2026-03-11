@@ -8,8 +8,6 @@ import random
 import threading
 
 import pytest
-import six
-from six.moves import range
 
 from happybase import Connection, ConnectionPool, NoConnectionsAvailable
 
@@ -146,11 +144,11 @@ def test_invalid_table_create():
 
 def test_families():
     families = table.families()
-    for name, fdesc in six.iteritems(families):
+    for name, fdesc in families.items():
         assert isinstance(name, bytes)
         assert isinstance(fdesc, dict)
         assert 'name' in fdesc
-        assert isinstance(fdesc['name'], six.binary_type)
+        assert isinstance(fdesc['name'], bytes)
         assert 'max_versions' in fdesc
 
 
