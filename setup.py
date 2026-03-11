@@ -28,8 +28,6 @@ setup(
     long_description=get_file_contents('README.rst'),
     author="Wouter Bolsterlee",
     author_email="uws@xs4all.nl",
-    maintainer="APIS-AI",
-    maintainer_email="267224074+APIS-AI@users.noreply.github.com",
     url='https://github.com/APIS-AI/happybase',
     project_urls={
         "Original Source": "https://github.com/wbolster/happybase",
