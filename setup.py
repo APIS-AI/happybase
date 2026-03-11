@@ -28,18 +28,29 @@ setup(
     long_description=get_file_contents('README.rst'),
     author="Wouter Bolsterlee",
     author_email="uws@xs4all.nl",
-    url='https://github.com/wbolster/happybase',
+    maintainer="APIS-AI",
+    maintainer_email="267224074+APIS-AI@users.noreply.github.com",
+    url='https://github.com/APIS-AI/happybase',
+    project_urls={
+        "Original Source": "https://github.com/wbolster/happybase",
+        "Documentation": "https://happybase.readthedocs.io/",
+    },
     install_requires=get_install_requires(),
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     license="MIT",
-    classifiers=(
+    classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
+        "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
         "Topic :: Database",
         "Topic :: Software Development :: Libraries :: Python Modules",
-    )
+    ],
 )

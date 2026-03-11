@@ -4,9 +4,20 @@ HappyBase
 **HappyBase** is a developer-friendly Python_ library to interact with Apache
 HBase_.
 
+This fork is maintained at `APIS-AI/happybase <https://github.com/APIS-AI/happybase>`_
+with a focus on practical modernization, compatibility, and keeping the public
+API stable for existing users.
+
 * `Documentation <https://happybase.readthedocs.io/>`_ (Read the Docs)
-* `Downloads <http://pypi.python.org/pypi/happybase/>`_ (PyPI)
-* `Source code <https://github.com/wbolster/happybase>`_ (Github)
+* `Downloads <https://pypi.org/project/happybase/>`_ (PyPI)
+* `Maintained fork <https://github.com/APIS-AI/happybase>`_ (GitHub)
+* `Original source <https://github.com/wbolster/happybase>`_ (GitHub)
+
+Current maintenance focus:
+
+* cleaner local test execution on current Python toolchains
+* targeted compatibility and packaging cleanup
+* conservative modernization without changing the synchronous public API
 
 .. _Python: http://python.org/
 .. _HBase: http://hbase.apache.org/
