@@ -2,12 +2,14 @@
 HappyBase connection pool module.
 """
 
+from __future__ import annotations
+
 import contextlib
 import logging
+import queue
 import socket
 import threading
-
-from six.moves import queue, range
+from collections.abc import Generator
 
 from thriftpy2.thrift import TException
 
@@ -32,10 +34,9 @@ class NoConnectionsAvailable(RuntimeError):
 
     .. versionadded:: 0.5
     """
-    pass
 
 
-class ConnectionPool(object):
+class ConnectionPool:
     """
     Thread-safe connection pool.
 
@@ -51,7 +52,8 @@ class ConnectionPool(object):
     :param kwargs: keyword arguments passed to
                    :py:class:`happybase.Connection`
     """
-    def __init__(self, size, **kwargs):
+
+    def __init__(self, size: int, **kwargs: object) -> None:
         if not isinstance(size, int):
             raise TypeError("Pool 'size' arg must be an integer")
 
@@ -62,14 +64,14 @@ class ConnectionPool(object):
             "Initializing connection pool with %d connections", size)
 
         self._lock = threading.Lock()
-        self._queue = queue.LifoQueue(maxsize=size)
+        self._queue: queue.LifoQueue[Connection] = queue.LifoQueue(maxsize=size)
         self._thread_connections = threading.local()
 
-        connection_kwargs = kwargs
+        connection_kwargs = dict(kwargs)
         connection_kwargs['autoconnect'] = False
 
-        for i in range(size):
-            connection = Connection(**connection_kwargs)
+        for _ in range(size):
+            connection = Connection(**connection_kwargs)  # type: ignore[arg-type]
             self._queue.put(connection)
 
         # The first connection is made immediately so that trivial
@@ -78,7 +80,7 @@ class ConnectionPool(object):
         with self.connection():
             pass
 
-    def _acquire_connection(self, timeout=None):
+    def _acquire_connection(self, timeout: float | None = None) -> Connection:
         """Acquire a connection from the pool."""
         try:
             return self._queue.get(True, timeout)
@@ -87,12 +89,14 @@ class ConnectionPool(object):
                 "No connection available from pool within specified "
                 "timeout")
 
-    def _return_connection(self, connection):
+    def _return_connection(self, connection: Connection) -> None:
         """Return a connection to the pool."""
         self._queue.put(connection)
 
     @contextlib.contextmanager
-    def connection(self, timeout=None):
+    def connection(
+        self, timeout: float | None = None
+    ) -> Generator[Connection, None, None]:
         """
         Obtain a connection from the pool.
 
@@ -107,16 +111,15 @@ class ConnectionPool(object):
         :py:exc:`NoConnectionsAvailable` is raised. If omitted, this
         method waits forever for a connection to become available.
 
-        :param int timeout: number of seconds to wait (optional)
+        :param float timeout: number of seconds to wait (optional)
         :return: active connection from the pool
         :rtype: :py:class:`happybase.Connection`
         """
-
         connection = getattr(self._thread_connections, 'current', None)
 
         return_after_use = False
         if connection is None:
-            # This is the outermost connection requests for this thread.
+            # This is the outermost connection request for this thread.
             # Obtain a new connection from the pool and keep a reference
             # in a thread local so that nested connection requests from
             # the same thread can return the same connection instance.

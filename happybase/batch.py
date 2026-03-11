@@ -2,33 +2,40 @@
 HappyBase Batch module.
 """
 
+from __future__ import annotations
+
 from collections import defaultdict
 import logging
-from numbers import Integral
-
-import six
 
 from Hbase_thrift import BatchMutation, Mutation
 
 logger = logging.getLogger(__name__)
 
 
-class Batch(object):
+class Batch:
     """Batch mutation class.
 
     This class cannot be instantiated directly; use :py:meth:`Table.batch`
     instead.
     """
-    def __init__(self, table, timestamp=None, batch_size=None,
-                 transaction=False, wal=True):
+
+    def __init__(
+        self,
+        table: object,
+        timestamp: int | None = None,
+        batch_size: int | None = None,
+        transaction: bool = False,
+        wal: bool = True,
+    ) -> None:
         """Initialise a new Batch instance."""
-        if not (timestamp is None or isinstance(timestamp, Integral)):
+        if not (timestamp is None or isinstance(timestamp, int)):
             raise TypeError("'timestamp' must be an integer or None")
 
         if batch_size is not None:
             if transaction:
-                raise TypeError("'transaction' cannot be used when "
-                                "'batch_size' is specified")
+                raise TypeError(
+                    "'transaction' cannot be used when 'batch_size' is specified"
+                )
             if not batch_size > 0:
                 raise ValueError("'batch_size' must be > 0")
 
@@ -37,30 +44,35 @@ class Batch(object):
         self._timestamp = timestamp
         self._transaction = transaction
         self._wal = wal
-        self._families = None
+        self._families: list[bytes] | None = None
         self._reset_mutations()
 
-    def _reset_mutations(self):
+    def _reset_mutations(self) -> None:
         """Reset the internal mutation buffer."""
-        self._mutations = defaultdict(list)
-        self._mutation_count = 0
+        self._mutations: dict[bytes, list] = defaultdict(list)
+        self._mutation_count: int = 0
 
-    def send(self):
+    def send(self) -> None:
         """Send the batch to the server."""
         bms = [
             BatchMutation(row, m)
-            for row, m in six.iteritems(self._mutations)
+            for row, m in self._mutations.items()
         ]
         if not bms:
             return
 
-        logger.debug("Sending batch for '%s' (%d mutations on %d rows)",
-                     self._table.name, self._mutation_count, len(bms))
+        logger.debug(
+            "Sending batch for '%s' (%d mutations on %d rows)",
+            self._table.name,
+            self._mutation_count,
+            len(bms),
+        )
         if self._timestamp is None:
             self._table.connection.client.mutateRows(self._table.name, bms, {})
         else:
             self._table.connection.client.mutateRowsTs(
-                self._table.name, bms, self._timestamp, {})
+                self._table.name, bms, self._timestamp, {}
+            )
 
         self._reset_mutations()
 
@@ -68,7 +80,12 @@ class Batch(object):
     # Mutation methods
     #
 
-    def put(self, row, data, wal=None):
+    def put(
+        self,
+        row: bytes,
+        data: dict[bytes, bytes],
+        wal: bool | None = None,
+    ) -> None:
         """Store data in the table.
 
         See :py:meth:`Table.put` for a description of the `row`, `data`,
@@ -84,20 +101,27 @@ class Batch(object):
                 isDelete=False,
                 column=column,
                 value=value,
-                writeToWAL=wal)
-            for column, value in six.iteritems(data))
+                writeToWAL=wal,
+            )
+            for column, value in data.items()
+        )
 
         self._mutation_count += len(data)
         if self._batch_size and self._mutation_count >= self._batch_size:
             self.send()
 
-    def delete(self, row, columns=None, wal=None):
+    def delete(
+        self,
+        row: bytes,
+        columns: list[bytes] | None = None,
+        wal: bool | None = None,
+    ) -> None:
         """Delete data from the table.
 
-        See :py:meth:`Table.put` for a description of the `row`, `data`,
-        and `wal` arguments. The `wal` argument should normally not be
-        used; its only use is to override the batch-wide value passed to
-        :py:meth:`Table.batch`.
+        See :py:meth:`Table.delete` for a description of the `row`,
+        `columns`, and `wal` arguments. The `wal` argument should normally
+        not be used; its only use is to override the batch-wide value
+        passed to :py:meth:`Table.batch`.
         """
         # Work-around Thrift API limitation: the mutation API can only
         # delete specified columns, not complete rows, so just list the
@@ -113,7 +137,8 @@ class Batch(object):
 
         self._mutations[row].extend(
             Mutation(isDelete=True, column=column, writeToWAL=wal)
-            for column in columns)
+            for column in columns
+        )
 
         self._mutation_count += len(columns)
         if self._batch_size and self._mutation_count >= self._batch_size:
@@ -123,14 +148,19 @@ class Batch(object):
     # Context manager methods
     #
 
-    def __enter__(self):
-        """Called upon entering a ``with`` block"""
+    def __enter__(self) -> "Batch":
+        """Called upon entering a ``with`` block."""
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback):
-        """Called upon exiting a ``with`` block"""
-        # If the 'with' block raises an exception, the batch will not be
-        # sent to the server.
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: object,
+    ) -> None:
+        """Called upon exiting a ``with`` block."""
+        # If the 'with' block raises an exception and transaction mode is
+        # enabled, the batch will not be sent to the server.
         if self._transaction and exc_type is not None:
             return
 
